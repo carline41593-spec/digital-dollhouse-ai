@@ -3,47 +3,51 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest) => {
   try {
-    const { image_base64, prompt } = await req.json();
+    const body = await req.json();
+    const { prompt } = body;
 
-    const apiKey = process.env.FIREWORKS_API_KEY;
+    // THIS WILL SHOW YOU THE EXACT PROBLEM
+    const apiKey = process.env.FIREWORKS_API_KEY?.trim();
+
     if (!apiKey) {
-      return NextResponse.json({ error: "FIREWORKS_API_KEY not set" }, { status: 500 });
+      return NextResponse.json(
+        { error: "FIREWORKS_API_KEY is missing or empty in Vercel → Go to Settings → Environment Variables and add it exactly as FIREWORKS_API_KEY" },
+        { status: 500 }
+      );
     }
 
-    // Build a super-detailed prompt using the user's description + face-likeness enhancers
-    const fullPrompt = `${prompt}, photorealistic close-up portrait of the same woman from the reference photo with identical facial features, skin tone, hair style and color, eye shape and color, expression, age, and details, ultra-detailed face, professional editorial photography, 8k resolution, sharp focus, masterpiece, vogue cover style, natural lighting`;
+    if (!prompt) {
+      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    }
 
-    const response = await fetch("https://api.fireworks.ai/inference/v1/image_generations", {
+    const res = await fetch("https://api.fireworks.ai/inference/v1/image_generations", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "accounts/fireworks/models/flux-pro-1-1-pro",
-        prompt: fullPrompt,
+        model: "accounts/fireworks/models/flux-pro",
+        prompt: `${prompt}, photorealistic fashion portrait of the exact same woman from reference, identical face, skin tone, eyes, hair, ultra detailed, 8k, vogue editorial, sharp focus, cinematic lighting`,
         num_images: 4,
         width: 1024,
-        height: 1024,
-        output_format: "jpeg",
+        height: 1280,
         steps: 28,
-        guidance_scale: 7.5,
-        seed: Math.floor(Math.random() * 999999),
+        guidance_scale: 6.5,
       }),
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
-    if (!response.ok) {
-      console.error("Fireworks error details:", data);
-      return NextResponse.json({ error: data.detail || `HTTP ${response.status}: ${data.error || "Generation failed"}` }, { status: 500 });
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: `Fireworks error: ${data.detail || data.message || "Unknown"} (check your API key or credits)` },
+        { status: 500 }
+      );
     }
 
-    const urls = data.images.map((img: any) => img.url);
-    return NextResponse.json({ images: urls });
-
+    return NextResponse.json({ images: data.images.map((i: any) => i.url) });
   } catch (err: any) {
-    console.error("Full error:", err);
-    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: `Crash: ${err.message}` }, { status: 500 });
   }
 };
