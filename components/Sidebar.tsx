@@ -43,9 +43,9 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="absolute bottom-8 left-8 right-8 text-center">
-        <p className="text-gold text-sm">© 2024 the DigitalDollhouse Creator AI</p>
-      </div>
+      <div className="absolute inset-x-0 bottom-8 text-center">
+  <p className="text-yellow-400 text-sm">© 2025 the DigitalDollhouse Creator AI</p>
+</div>
     </div>
   );
 }
