@@ -1,69 +1,33 @@
-"use client";
-import { useState } from "react";
-
 export default function ImageGenerator() {
-  const [prompt, setPrompt] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const generate = async () => {
-    if (!prompt) return;
-    setLoading(true);
-    setImageUrl("");
-
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-
-      const data = await res.json();
-      setImageUrl(data.image_url);
-    } catch (err) {
-      alert("Error – check console");
-      console.error(err);
-    }
-    setLoading(false);
-  };
-
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-8">AI Image Generator</h1>
+    <div className="min-h-screen p-12 pl-96">
+      <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-400 to-yellow-400 bg-clip-text text-transparent mb-4">
+        Image Generation Studio
+      </h1>
+      <p className="text-gray-400 text-lg mb-12 max-w-2xl">
+        Create stunning, high-quality images from text descriptions using Flux Pro. Describe what you want to see, select an aspect ratio, and let the AI bring your vision to life.
+      </p>
 
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder="Describe your dream dollhouse scene..."
-        className="w-full h-32 p-4 rounded-lg bg-gray-900 text-white border border-pink-500 focus:outline-none focus:border-pink-300"
-      />
+      <div className="glass p-10 max-w-4xl">
+        <label className="block text-gold mb-4 text-xl">Prompt</label>
+        <textarea
+          placeholder="e.g., A cinematic shot of a luxury Barbie penthouse at golden hour..."
+          className="input-dark h-48 resize-none"
+        />
 
-      <button
-        onClick={generate}
-        disabled={loading}
-        className="mt-6 px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full font-bold text-lg hover:from-pink-600 hover:to-purple-700 disabled:opacity-50"
-      >
-        {loading ? "Generating... (30–60s)" : "Generate Image"}
-      </button>
-
-      {imageUrl && (
-        <div className="mt-12">
-          <img
-            src={imageUrl}
-            alt="Generated"
-            className="rounded-xl shadow-2xl max-w-full"
-          />
-          <div className="mt-6 text-center">
-            <a
-              href={imageUrl}
-              download
-              className="inline-block px-8 py-3 bg-pink-600 rounded-lg hover:bg-pink-700"
-            >
-              Download Image
-            </a>
-          </div>
+        <div className="mt-8">
+          <label className="block text-gold mb-4 text-xl">Aspect Ratio</label>
+          <select className="w-full px-6 py-5 bg-black/60 border border-pink-500/30 rounded-2xl text-white">
+            <option>Square (1:1)</option>
+            <option>Portrait (9:16)</option>
+            <option>Landscape (16:9)</option>
+          </select>
         </div>
-      )}
+
+        <button className="btn-pink mt-10">
+          Generate Image
+        </button>
+      </div>
     </div>
   );
 }
