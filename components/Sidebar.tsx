@@ -9,7 +9,7 @@ const navItems = [
   { href: "/image-editing", label: "Image Editing", icon: "Edit" },
   { href: "/photoshoot", label: "AI Photoshoot Lounge", icon: "Camera" },
   { href: "/live-assistant", label: "Live Assistant", icon: "Mic" },
-  { href: "/content-analyzer", label: "Content Analyzer", icon: "Chart" },
+  { href: "/prompt-grabber", label: "Prompt Grabber", icon: "Magic" },
   { href: "/text-to-speech", label: "Text-to-Speech", icon: "Volume" },
   { href: "/library", label: "My Library", icon: "Folder" },
 ];
