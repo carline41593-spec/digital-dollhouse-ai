@@ -7,7 +7,7 @@ export const POST = async (req: NextRequest) => {
 
     const FIREWORKS_KEY = process.env.FIREWORKS_API_KEY;
     if (!FIREWORKS_KEY) {
-      return NextResponse.json({ error: "Missing API key" }, { status: 500 });
+      return NextResponse.json({ error: "Missing FIREWORKS_API_KEY" }, { status: 500 });
     }
 
     const response = await fetch(
@@ -20,7 +20,8 @@ export const POST = async (req: NextRequest) => {
         },
         body: JSON.stringify({
           image: image_base64,
-          prompt: prompt + ", photorealistic, 8k, perfect likeness, professional studio lighting",
+          prompt:
+            prompt + ", photorealistic, masterpiece, 8k, perfect likeness, professional studio lighting, sharp details",
           num_images: 4,
           steps: 28,
           guidance_scale: 3.5,
@@ -39,15 +40,7 @@ export const POST = async (req: NextRequest) => {
     const urls = data.images.map((img: any) => img.url);
     return NextResponse.json({ images: urls });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Server error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-};
-
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "10mb",
-    },
-  },
 };
