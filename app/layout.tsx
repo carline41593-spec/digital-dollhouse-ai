@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import Sidebar from "../components/Sidebar";
+import "./globals.css";                 // ← THIS LINE MUST BE EXACTLY HERE
+import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
-  title: "Digital Dollhouse Creator AI",
-  description: "AI Photoshoot & Content Suite",
+  title: "DigitalDollhouse Creator AI",
+  description: "The ultimate AI suite for creators",
 };
 
 export default function RootLayout({
@@ -14,9 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex min-h-screen">
+      <body className="min-h-screen bg-black">
         <Sidebar />
-        <main className="flex-1 ml-64 p-8">{children}</main>
+        <main className="pl-80">{children}</main>
       </body>
     </html>
   );
