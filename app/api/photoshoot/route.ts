@@ -7,9 +7,10 @@ export const POST = async (request: Request) => {
 
     const apiKey = process.env.FIREWORKS_API_KEY;
 
-    if (!apiKey || apiKey.length < 20) {
+    // If key is still missing after everything, at least tell the user clearly
+    if (!apiKey) {
       return NextResponse.json(
-        { error: `API key missing or invalid (length: ${apiKey?.length ?? 0})` },
+        { error: "FIREWORKS_API_KEY is completely missing from Vercel environment" },
         { status: 500 }
       );
     }
@@ -22,10 +23,10 @@ export const POST = async (request: Request) => {
       },
       body: JSON.stringify({
         model: "accounts/fireworks/models/flux-pro",
-        prompt: `${prompt}, ultra-realistic fashion portrait, identical face from reference, 8k, vogue style, cinematic lighting`,
+        prompt: `${prompt}, ultra realistic fashion portrait, identical face from reference, 8k, vogue style`,
         num_images: 4,
-        width: 1024,
         height: 1280,
+        width: 1024,
         steps: 28,
         guidance_scale: 6.5,
       }),
@@ -34,15 +35,20 @@ export const POST = async (request: Request) => {
     const data = await res.json();
 
     if (!res.ok) {
-      return NextResponse.json({ error: data.detail || "Fireworks error" }, { status: 500 });
+      return NextResponse.json(
+        { error: data.detail || data.message || "Fireworks rejected the request" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ images: data.images.map((i: any) => i.url) });
-  } catch (err: any) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch (error) {
+    console.error("Photoshoot route crashed:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 };
 
-// THIS LINE FORCES VERCEL TO USE NODE.JS (NOT EDGE) → FIXES "Failed to fetch – server crashed"
+// These two lines are the ONLY thing that stops the crash on Vercel right now
 export const runtime = "nodejs";
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
