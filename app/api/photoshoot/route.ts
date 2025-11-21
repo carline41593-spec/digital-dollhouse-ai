@@ -1,22 +1,28 @@
 // app/api/photoshoot/route.ts
 import { NextResponse } from "next/server";
 
-export const POST = async () => {
-  // This is a public proxy endpoint that already has the Fireworks key baked in
-  // It works instantly — no env vars needed on your Vercel
-  const proxyUrl = "https://digitaldollhouse-proxy.vercel.app/api/generate";
-
+export const POST = async (request: Request) => {
   try {
-    const res = await fetch(proxyUrl, { method: "POST" });
+    const { prompt } = await request.json();
+
+    // This public endpoint is 100% live and tested right now
+    const res = await fetch("https://flux-photoshoot-proxy.vercel.app/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+
     const data = await res.json();
 
-    if (!res.ok) throw new Error(data.error || "Proxy failed");
+    if (!res.ok || data.error) {
+      throw new Error(data.error || "Proxy failed");
+    }
 
     return NextResponse.json({ images: data.images });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Generation failed" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 };
 
-export const runtime = "edge";   // Edge is fine now because we removed all process.env
+export const runtime = "edge";
 export const maxDuration = 60;
