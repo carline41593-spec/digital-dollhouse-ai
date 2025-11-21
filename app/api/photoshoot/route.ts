@@ -7,10 +7,9 @@ export const POST = async (request: Request) => {
 
     const apiKey = process.env.FIREWORKS_API_KEY;
 
-    // Show you exactly what Vercel sees
     if (!apiKey || apiKey.length < 20) {
       return NextResponse.json(
-        { error: `FIREWORKS_API_KEY missing or too short (length: ${apiKey?.length ?? 0})` },
+        { error: `API key missing or invalid (length: ${apiKey?.length ?? 0})` },
         { status: 500 }
       );
     }
@@ -23,7 +22,7 @@ export const POST = async (request: Request) => {
       },
       body: JSON.stringify({
         model: "accounts/fireworks/models/flux-pro",
-        prompt: `${prompt}, ultra-realistic fashion portrait of the exact same woman from reference, identical face, 8k, vogue editorial, cinematic lighting`,
+        prompt: `${prompt}, ultra-realistic fashion portrait, identical face from reference, 8k, vogue style, cinematic lighting`,
         num_images: 4,
         width: 1024,
         height: 1280,
@@ -35,19 +34,15 @@ export const POST = async (request: Request) => {
     const data = await res.json();
 
     if (!res.ok) {
-      return NextResponse.json(
-        { error: `Fireworks error: ${data.detail || data.message || "unknown"}` },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: data.detail || "Fireworks error" }, { status: 500 });
     }
 
     return NextResponse.json({ images: data.images.map((i: any) => i.url) });
   } catch (err: any) {
-    console.error("Photoshoot API crash:", err);
-    return NextResponse.json({ error: "Failed to fetch – server crashed" }, { status: 500 });
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 };
 
-// This line is REQUIRED for Vercel to accept large payloads & avoid "Failed to fetch"
+// THIS LINE FORCES VERCEL TO USE NODE.JS (NOT EDGE) → FIXES "Failed to fetch – server crashed"
 export const runtime = "nodejs";
 export const maxDuration = 60;
