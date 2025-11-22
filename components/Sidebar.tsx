@@ -11,9 +11,7 @@ const navItems = [
   { href: "/image-generation", label: "Image Generation", icon: "Image" },
   { href: "/image-editing", label: "Image Editing", icon: "Edit" },
   { href: "/photoshoot", label: "AI Photoshoot Lounge", icon: "Camera" },
-  { href: "/live-assistant", label: "Live Assistant", icon: "Mic" },
   { href: "/prompt-grabber", label: "Magic Prompt Grabber", icon: "Magic" },
-  { href: "/library", label: "My Library", icon: "Folder" },
 ];
 
 export default function Sidebar() {
