@@ -17,33 +17,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
     }
 
-    const res = await fetch('https://api.together.xyz/v1/images/generations', {
+    // FLUX.1 Kontext [dev] for image + text (your face + changes)
+    const res = await fetch('https://api.together.xyz/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'black-forest-labs/flux.1-dev',
-        prompt: prompt + ', photorealistic, 8k, professional studio lighting, ultra detailed skin',
-        init_image: `data:image/jpeg;base64,${image_base64}`,
-        n: 4,
-        steps: 28,
-        width: 1024,
-        height: 1024,
-        guidance_scale: 7.5,
-        response_format: 'url',
+        model: 'black-forest-labs/FLUX.1-kontext-dev',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt + ', photorealistic, 8k, professional lighting, keep exact face features' },
+              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image_base64}` } }  // Your reference face
+            ]
+          }
+        ],
+        max_tokens: 512,
+        temperature: 0.7,
+        response_format: { type: 'image' },  // Outputs image URLs
       }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      console.error('Together AI error:', err);
       return NextResponse.json({ error: 'Generation failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
-    const images = data.data.map((img: any) => img.url);
+    const images = data.choices[0].message.content.parts.filter((part: any) => part.type === 'image_url').map((part: any) => part.image_url.url);
 
     return NextResponse.json({ images });
   } catch (error: any) {
