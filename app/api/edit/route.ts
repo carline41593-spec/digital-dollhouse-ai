@@ -11,7 +11,6 @@ export async function POST(request: Request) {
     if (!image_base64 || !prompt) return NextResponse.json({ error: 'Missing data' }, { status: 400 });
 
     const TOKEN = process.env.TOGETHER_API_KEY;
-    if (!TOKEN) return NextResponse.json({ error: 'No API key' }, { status: 500 });
 
     const res = await fetch('https://api.together.xyz/v1/images/generations', {
       method: 'POST',
@@ -20,13 +19,14 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "black-forest-labs/flux-dreambooth-lora",
-        prompt: `Keep this exact person's face and identity. Only change: ${prompt}. Photorealistic, 8k, professional lighting.`,
+        model: "black-forest-labs/FLUX.1-dev-lora",
+        prompt: `this exact person, ${prompt}, photorealistic, 8k, ultra detailed, professional lighting`,
         init_image: `data:image/jpeg;base64,${image_base64}`,
+        strength: 0.82,
         n: 1,
+        steps: 28,
         width: 1024,
         height: 1024,
-        steps: 28,
         guidance_scale: 7.5,
         response_format: "url"
       }),
