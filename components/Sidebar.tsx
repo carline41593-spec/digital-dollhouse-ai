@@ -13,7 +13,6 @@ const navItems = [
   { href: "/photoshoot", label: "AI Photoshoot Lounge", icon: "Camera" },
   { href: "/live-assistant", label: "Live Assistant", icon: "Mic" },
   { href: "/prompt-grabber", label: "Magic Prompt Grabber", icon: "Magic" },
-  { href: "/text-to-speech", label: "Text-to-Speech", icon: "Volume" },
   { href: "/library", label: "My Library", icon: "Folder" },
 ];
 
