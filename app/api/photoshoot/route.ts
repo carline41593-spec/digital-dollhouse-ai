@@ -13,13 +13,13 @@ export const POST = async (request: Request) => {
       },
       body: JSON.stringify({
         model: "accounts/fireworks/models/flux-pro",
-        prompt: prompt || "ultra realistic masterpiece, 8k",
+        prompt: `${prompt}, ultra realistic transformation of the uploaded image, keep exact same face and person, 8k masterpiece, professional photography`,
         image: image_base64,
-        strength: 0.85,
-        num_images: 4,
+        strength: 0.8,
+        num_images: 1,           // ← ONLY ONE IMAGE
         width: 1024,
         height: 1280,
-        steps: 28,
+        steps: 30,
         guidance_scale: 6.5,
       }),
     });
@@ -27,10 +27,10 @@ export const POST = async (request: Request) => {
     const data = await res.json();
 
     if (!res.ok) {
-      return NextResponse.json({ error: data.detail || "Generation failed" }, { status: 500 });
+      return NextResponse.json({ error: data.detail || "Failed" }, { status: 500 });
     }
 
-    return NextResponse.json({ images: data.images.map((i: any) => i.url) });
+    return NextResponse.json({ image: data.images[0].url }); // ← return single URL
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
