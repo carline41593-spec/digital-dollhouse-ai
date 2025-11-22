@@ -1,4 +1,3 @@
-// app/image-generation/page.tsx
 'use client';
 
 import { useState } from 'react';
