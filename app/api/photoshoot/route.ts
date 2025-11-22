@@ -1,25 +1,22 @@
-// app/api/photoshoot/route.ts   ← REPLACE YOUR ENTIRE FILE WITH THIS
-export const runtime = 'nodejs';       // ← Critical for fal.ai CORS
-export const maxDuration = 60;         // ← Keeps Vercel from killing it
+// app/api/photoshoot/route.ts   ← REPLACE ENTIRE FILE
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
-
-import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { image_base64, prompt } = await request.json();
 
     if (!image_base64 || !prompt) {
-      return NextResponse.json({ error: 'Missing image or prompt' }, { status: 400 });
+      return new Response(JSON.stringify({ error: 'Missing face or prompt' }), { status: 400 });
     }
 
     const FAL_KEY = process.env.FAL_KEY;
     if (!FAL_KEY) {
-      return NextResponse.json({ error: 'FAL_KEY not set in Vercel' }, { status: 500 });
+      return new Response(JSON.stringify({ error: 'FAL_KEY missing' }), { status: 500 });
     }
 
-    const enhancedPrompt = `${prompt}, perfect likeness to uploaded face, ultra-realistic, 8k, professional studio lighting, high fashion, sharp details`;
-
+    // THIS IS THE KEY: we send your uploaded face as image_url
     const res = await fetch('https://fal.run/fal-ai/flux/schnell', {
       method: 'POST',
       headers: {
@@ -27,59 +24,29 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: enhancedPrompt,
+        prompt: prompt + ", ultra realistic, 8k, professional lighting, high fashion",
+        image_url: `data:image/jpeg;base64,${image_base64}`,  // ← THIS USES YOUR FACE
         image_size: 'square_hd',
-        num_inference_steps: 4,
+        strength: 0.75,           // 0.0 = keep original face 100%, 0.99 = more creative
+        num_inference_steps: 6,
         num_images: 4,
       }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      console.error('fal.ai error:', err);
-      return NextResponse.json({ error: 'Generation failed', details: err }, { status: 502 });
+      return new Response(JSON.stringify({ error: 'fal.ai failed', details: err }), { status: 502 });
     }
 
     const data = await res.json();
-
-    // fal.ai returns { images: [ { url: "..." }, ... ] }
     const imageUrls = data.images?.map((img: any) => img.url) || [];
 
-    if (imageUrls.length === 0) {
-      return NextResponse.json({ error: 'No images returned' }, { status: 500 });
-    }
-
-    // FINAL RESPONSE — THIS FIXES CORS AND MAKES IMAGES APPEAR IN YOUR APP
-    return new Response(
-      JSON.stringify({ images: imageUrls }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      }
-    );
+    return new Response(JSON.stringify({ images: imageUrls }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
 
   } catch (error: any) {
-    console.error('Photoshoot route crash:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Server error' }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
-}
-
-// Handle preflight CORS request
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
 }
