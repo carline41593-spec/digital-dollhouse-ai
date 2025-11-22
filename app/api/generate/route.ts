@@ -18,13 +18,13 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "black-forest-labs/FLUX.1-dev-lora",
-        prompt: prompt + ", photorealistic, 8k, ultra detailed, cinematic",
+        model: "black-forest-labs/FLUX.1-dev",
+        prompt: prompt + ", photorealistic, 8k, ultra detailed, cinematic lighting",
         n: 1,
-        steps: 28,
+        steps: 30,
         width: 1024,
         height: 1024,
-        guidance_scale: 7.5,
+        seed: 42,
         response_format: "url"
       }),
     });
