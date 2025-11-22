@@ -1,8 +1,7 @@
-// app/photoshoot/page.tsx
+// app/photoshoot/page.tsx   ← REPLACE YOUR ENTIRE FILE WITH THIS
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 
 export default function Photoshoot() {
   const [faceImage, setFaceImage] = useState<string | null>(null);
@@ -27,7 +26,7 @@ export default function Photoshoot() {
     setResults([]);
 
     const base64 = faceImage.split(",")[1];
-    const prompt = `${profession || "beautiful model"}, ${type} photoshoot, ${details || "luxury setting"}, perfect likeness to uploaded face, ultra realistic, 8k, professional lighting`;
+    const prompt = `${profession || "beautiful model"}, ${type} photoshoot, ${details || "luxury setting"}, perfect likeness to uploaded face, ultra realistic, 8k, professional lighting, cinematic, high fashion`;
 
     try {
       const res = await fetch("/api/photoshoot", {
@@ -37,26 +36,19 @@ export default function Photoshoot() {
       });
 
       const data = await res.json();
-      console.log("API returned:", data); // ← keep this just in case
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Generation failed");
-      }
+      if (!res.ok || data.error) throw new Error(data.error || "Failed");
 
-      // THIS IS THE MAGIC PART — works with fal.ai, Replicate, or anything
-      let images: string[] = [];
-      if (Array.isArray(data.images)) {
-        images = data.images;
-      } else if (data.image_url) {
-        images = [data.image_url, data.image_url, data.image_url, data.image_url];
-      } else if (data.output && Array.isArray(data.output)) {
-        images = data.output;
-      }
+      // Handles fal.ai, Replicate, Fireworks — everything
+      let urls: string[] = [];
+      if (Array.isArray(data.images)) urls = data.images;
+      else if (data.image_url) urls = [data.image_url, data.image_url, data.image_url, data.image_url];
+      else if (data.output?.[0]) urls = Array.isArray(data.output) ? data.output : [data.output];
 
-      setResults(images.slice(0, 4)); // always show up to 4
+      setResults(urls.slice(0, 4));
 
     } catch (err: any) {
-      alert("Error: " + err.message);
+      alert("Generation failed: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -69,11 +61,12 @@ export default function Photoshoot() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Left – inputs */}
+        {/* Left – Inputs */}
         <div className="space-y-8">
+          {/* Face Upload */}
           <div className="bg-gray-900/50 backdrop-blur p-10 rounded-3xl text-center">
             {faceImage ? (
-              <Image src={faceImage} alt="face" width={500} height={700} className="rounded-3xl mx-auto" />
+              <img src={faceImage} alt="Your face" className="rounded-3xl mx-auto max-h-96" />
             ) : (
               <label className="cursor-pointer">
                 <div className="h-96 bg-black/60 border-4 border-dashed border-pink-500/50 rounded-3xl flex items-center justify-center text-4xl text-gray-400">
@@ -86,7 +79,7 @@ export default function Photoshoot() {
 
           <input
             className="w-full p-5 bg-gray-900 rounded-2xl border border-purple-500/30 focus:border-purple-400 outline-none text-xl"
-            placeholder="Profession (e.g. CEO, Mermaid)"
+            placeholder="Profession (e.g. CEO, Mermaid, Rockstar)"
             value={profession}
             onChange={(e) => setProfession(e.target.value)}
           />
@@ -105,7 +98,7 @@ export default function Photoshoot() {
 
           <textarea
             className="w-full h-32 p-5 bg-gray-900 rounded-2xl border border-purple-500/30 focus:border-purple-400 outline-none text-xl"
-            placeholder="Extra details..."
+            placeholder="Extra scene details..."
             value={details}
             onChange={(e) => setDetails(e.target.value)}
           />
@@ -113,24 +106,34 @@ export default function Photoshoot() {
           <button
             onClick={generate}
             disabled={loading || !faceImage}
-            className="w-full py-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-2xl font-bold hover:scale-105 transition disabled:opacity-50"
+            className="w-full py-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-3xl font-bold hover:scale-105 transition disabled:opacity-50"
           >
-            {loading ? "Generating 4 Images… (5–20s)" : "Generate Photoshoot"}
+            {loading ? "Generating Magic… (5–20s)" : "Generate Photoshoot"}
           </button>
         </div>
 
-        {/* Right – results */}
-        <div className="grid grid-cols-2 gap-6">
+        {/* Right – Results Grid */}
+        <div className="grid grid-cols-2 gap-8">
           {loading &&
             [...Array(4)].map((_, i) => (
-              <div key={i} className="h-96 bg-gray-900/50 rounded-3xl animate-pulse" />
+              <div key={i} className="h-96 bg-gray-900/30 rounded-3xl animate-pulse" />
             ))}
 
           {results.map((url, i) => (
-            <div key={i} className="bg-gray-900/50 backdrop-blur rounded-3xl p-4">
-              <Image src={url} alt="result" width={600} height={800} className="rounded-2xl w-full" />
-              <a href={url} download className="block mt-4 text-center text-purple-400 font-bold">
-                Download
+            <div key={i} className="space-y-4">
+              {/* THIS IS THE FIX: regular <img> instead of Next/Image */}
+              <img
+                src={url}
+                alt={`Photoshoot ${i + 1}`}
+                className="w-full rounded-3xl shadow-2xl border border-purple-500/30"
+                style={{ height: "600px", objectFit: "cover" }}
+              />
+              <a
+                href={url}
+                download={`digitaldc-photoshoot-${i + 1}.jpg`}
+                className="block text-center bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold py-4 rounded-full hover:scale-105 transition"
+              >
+                Download Photo {i + 1}
               </a>
             </div>
           ))}
