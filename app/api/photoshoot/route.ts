@@ -1,4 +1,4 @@
-// app/api/photoshoot/route.ts   ← THIS ONE FIXES EVERYTHING
+// app/api/photoshoot/route.ts
 import { NextResponse } from "next/server";
 
 export const POST = async (request: Request) => {
@@ -14,8 +14,8 @@ export const POST = async (request: Request) => {
       body: JSON.stringify({
         model: "accounts/fireworks/models/flux-pro",
         prompt: prompt || "ultra realistic masterpiece, 8k",
-        image: image_base64,           // ← This sends your uploaded image
-        strength: 0.85,                // ← How much to change (0.0 = keep original, 1.0 = full change)
+        image: image_base64,
+        strength: 0.85,
         num_images: 4,
         width: 1024,
         height: 1280,
@@ -25,7 +25,10 @@ export const POST = async (request: Request) => {
     });
 
     const data = await res.json();
-    if (!res.ok) return NextResponse.json({ error: data.detail || " "Failed" }, { status: 500 });
+
+    if (!res.ok) {
+      return NextResponse.json({ error: data.detail || "Generation failed" }, { status: 500 });
+    }
 
     return NextResponse.json({ images: data.images.map((i: any) => i.url) });
   } catch (error) {
@@ -35,3 +38,4 @@ export const POST = async (request: Request) => {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
