@@ -3,13 +3,19 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
+import { NextResponse } from 'next/server';
+
 export async function POST(request: Request) {
   try {
     const { image_base64, reference_base64, prompt } = await request.json();
-    if (!image_base64 || !prompt) return new Response(JSON.stringify({ error: 'Main image + prompt required' }), { status: 400 });
+    if (!image_base64 || !prompt) {
+      return NextResponse.json({ error: 'Main image + prompt required' }, { status: 400 });
+    }
 
     const TOKEN = process.env.TOGETHER_API_KEY;
-    if (!TOKEN) return new Response(JSON.stringify({ error: 'TOGETHER_API_KEY missing' }), { status: 500 });
+    if (!TOKEN) {
+      return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    }
 
     const input: any = {
       model: 'black-forest-labs/flux.1-dev',
@@ -23,24 +29,29 @@ export async function POST(request: Request) {
       response_format: 'url',
     };
 
-    if (reference_base64) input.reference_image = `data:image/jpeg;base64,${reference_base64}`;
+    if (reference_base64) {
+      input.reference_image = `data:image/jpeg;base64,${reference_base64}`;
+    }
 
     const res = await fetch('https://api.together.xyz/v1/images/generations', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${TOKEN}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(input),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      return new Response(JSON.stringify({ error: err }), { status: 502 });
+      return NextResponse.json({ error: 'Generation failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
     const image_url = data.data[0].url;
 
-    return new Response(JSON.stringify({ image_url }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return NextResponse.json({ image_url });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
