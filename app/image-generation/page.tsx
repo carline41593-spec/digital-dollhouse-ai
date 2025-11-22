@@ -1,5 +1,5 @@
 // app/image-generation/page.tsx
-'use client';
+"use client";
 
 import { useState } from "react";
 
@@ -22,9 +22,15 @@ export default function ImageGeneration() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Failed");
+      if (!res.ok || data.error) throw new Error(data.error || "Failed");
 
-      setImageUrl(data.image_url);
+      // Handles fal.ai, Replicate, Fireworks — anything!
+      let url = "";
+      if (data.image_url) url = data.image_url;
+      else if (Array.isArray(data.images) && data.images[0]) url = data.images[0];
+      else if (data.output && data.output[0]) url = data.output[0];
+
+      setImageUrl(url);
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -50,12 +56,12 @@ export default function ImageGeneration() {
         disabled={loading}
         className="px-16 py-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-2xl font-bold hover:scale-105 transition disabled:opacity-50"
       >
-        {loading ? "Generating… (20–40s)" : "Generate Dollhouse"}
+        {loading ? "Generating… (5–20s)" : "Generate Dollhouse"}
       </button>
 
       {imageUrl && (
         <div className="mt-16">
-          <img src={imageUrl} alt="Generated" className="rounded-3xl shadow-2xl max-w-4xl" />
+          <img src={imageUrl} alt="Your dollhouse" className="rounded-3xl shadow-2xl max-w-4xl" />
           <a href={imageUrl} download className="block mt-6 text-center text-purple-400 text-xl underline">
             Download Image
           </a>
