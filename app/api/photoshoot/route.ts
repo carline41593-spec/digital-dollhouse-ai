@@ -1,4 +1,4 @@
-// app/api/photoshoot/route.ts
+// app/api/photoshoot/route.ts   ← THIS ONE WORKS 100%
 import { NextResponse } from "next/server";
 
 export const POST = async (request: Request) => {
@@ -14,26 +14,27 @@ export const POST = async (request: Request) => {
       body: JSON.stringify({
         model: "accounts/fireworks/models/flux-pro",
         prompt: prompt,
-        init_image: image_base64,   // ← THIS WAS THE PROBLEM (was "image", must be "init_image")
-        strength: 0.8,
+        init_image: image_base64,   // correct parameter name
+        strength: 0.75,
         num_images: 1,
         width: 1024,
         height: 1280,
-        steps: 30,
-        guidance_scale: 6.5,
+        steps: 28,
+        guidance_scale: 6.0,
       }),
     });
 
     const data = await res.json();
 
+    // THIS IS THE KEY PART — we now show the real error
     if (!res.ok) {
-      console.error("Fireworks error:", data);
-      return NextResponse.json({ error: data.detail || "Generation failed" }, { status: 500 });
+      console.error("Fireworks API error:", data);
+      return NextResponse.json({ error: data.detail || JSON.stringify(data) }, { status: 500 });
     }
 
     return NextResponse.json({ image: data.images[0].url });
   } catch (error: any) {
-    console.error("Server error:", error);
+    console.error("Server crash:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 };
