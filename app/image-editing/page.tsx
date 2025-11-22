@@ -1,8 +1,7 @@
-// app/image-editing/page.tsx   ← REPLACE ENTIRE FILE
+// app/image-editing/page.tsx
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 
 export default function ImageEditing() {
   const [mainImage, setMainImage] = useState<string | null>(null);
@@ -31,7 +30,6 @@ export default function ImageEditing() {
 
   const generate = async () => {
     if (!mainImage || !prompt.trim()) return;
-
     setLoading(true);
     setResult(null);
 
@@ -45,7 +43,7 @@ export default function ImageEditing() {
         body: JSON.stringify({
           image_base64: mainBase64,
           reference_base64: refBase64,
-          prompt: prompt.trim(),
+          prompt: `Keep this exact person's face and identity. Only change: ${prompt.trim()}`,
         }),
       });
 
@@ -62,17 +60,17 @@ export default function ImageEditing() {
 
   return (
     <div className="min-h-screen bg-black text-white p-12">
-      <h1 className="text-8xl font-bold bg-gradient-to-r from-pink-500 to-orange-500 bg-clip-text text-transparent mb-8">
+      <h1 className="text-8xl font-bold bg-gradient-to-r from-pink-500 to-orange-500 bg-clip-text text-transparent text-center mb-12">
         Image Magic Studio
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
-        {/* 1. Main Image (required) */}
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-12">
+        {/* Main Image */}
         <div className="space-y-6">
-          <h3 className="text-3xl font-bold">Main Image (your face / subject)</h3>
+          <h3 className="text-3xl font-bold">Main Image (Your Face)</h3>
           {!mainImage ? (
             <label className="block cursor-pointer">
-              <div className="h-96 bg-gray-900/50 border-4 border-dashed border-purple-600 rounded-3xl flex items-center justify-center text-2xl">
+              <div className="h-96 bg-gray-900 border-4 border-dashed border-purple-600 rounded-3xl flex items-center justify-center text-2xl">
                 Upload Main Photo
               </div>
               <input type="file" accept="image/*" onChange={handleMain} className="hidden" />
@@ -82,13 +80,13 @@ export default function ImageEditing() {
           )}
         </div>
 
-        {/* 2. Reference + Prompt */}
+        {/* Prompt + Reference */}
         <div className="space-y-6">
-          <h3 className="text-3xl font-bold">Style / Pose Reference (optional)</h3>
+          <h3 className="text-3xl font-bold">Style Reference (Optional)</h3>
           {!refImage ? (
             <label className="block cursor-pointer">
-              <div className="h-64 bg-gray-900/40 border-4 border-dashed border-pink-600/60 rounded-3xl flex items-center justify-center text-xl">
-                Upload Reference (pose, outfit, lighting…)
+              <div className="h-64 bg-gray-900/50 border-4 border-dashed border-pink-600 rounded-3xl flex items-center justify-center text-xl">
+                Upload Pose/Style Ref
               </div>
               <input type="file" accept="image/*" onChange={handleRef} className="hidden" />
             </label>
@@ -99,8 +97,8 @@ export default function ImageEditing() {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g. cyberpunk hacker with neon tattoos and pink hair, luxury fashion editorial, anime character, beach sunset…"
-            className="w-full h-48 p-8 bg-gray-900/80 rounded-3xl text-xl border border-purple-500/40 focus:border-pink-500 outline-none resize-none"
+            placeholder="e.g. cyberpunk neon hair, luxury fashion editorial, anime character..."
+            className="w-full h-48 p-6 text-xl bg-gray-900 rounded-3xl border border-purple-600 focus:border-pink-600 outline-none resize-none"
           />
 
           <button
@@ -108,16 +106,16 @@ export default function ImageEditing() {
             disabled={loading || !mainImage || !prompt}
             className="w-full py-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-3xl font-bold hover:scale-105 transition disabled:opacity-50"
           >
-            {loading ? "Creating Magic… (8–15s)" : "Generate Edited Image"}
+            {loading ? "Transforming..." : "Generate Edited Image"}
           </button>
         </div>
 
-        {/* 3. Result */}
+        {/* Result */}
         <div>
           <h3 className="text-3xl font-bold mb-6">Result</h3>
           {loading && (
             <div className="h-96 bg-gray-900/50 rounded-3xl animate-pulse flex items-center justify-center">
-              <p className="text-3xl">Transforming your photo…</p>
+              <p className="text-3xl">Working...</p>
             </div>
           )}
           {result && (
@@ -126,7 +124,7 @@ export default function ImageEditing() {
               <a
                 href={result}
                 download="digitaldc-edited.jpg"
-                className="block text-center bg-gradient-to-r from-pink-600 to-purple-600 py-6 rounded-full text-2xl font-bold hover:scale-105 transition"
+                className="block text-center bg-gradient-to-r from-pink-600 to-purple-600 py-6 rounded-full text-2xl font-bold"
               >
                 Download Result
               </a>
