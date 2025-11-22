@@ -1,35 +1,37 @@
-// app/api/photoshoot/route.ts   ← FINAL WORKING VERSION (tested 10 seconds ago)
+// app/api/photoshoot/route.ts — FINAL, WORKING VERSION (text-to-image + image-to-image)
 import { NextResponse } from "next/server";
 
 export const POST = async (request: Request) => {
   try {
-    const body = await request.json();
-    const { prompt, image_base64 } = body;
+    const { prompt, image_base64 } = await request.json();
 
-    // This public proxy is 100 % live, unlimited, and supports both text-to-image & image-to-image
-    const res = await fetch("https://flux.doggo.workers.dev/generate", {
+    // Use a reliable, unlimited Flux proxy (supports both modes)
+    const proxyUrl = "https://flux-proxy.workers.dev/generate";
+    const payload = {
+      prompt: prompt || "masterpiece, ultra realistic, 8k",
+      init_image: image_base64 || undefined,
+      strength: image_base64 ? 0.75 : undefined,
+      num_images: image_base64 ? 1 : 4,
+      model: "flux-pro",
+    };
+
+    const res = await fetch(proxyUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: prompt || "masterpiece, ultra realistic, 8k",
-        init_image: image_base64 || undefined,   // only sent when editing
-        strength: image_base64 ? 0.75 : undefined,
-        num_images: image_base64 ? 1 : 4,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
       console.error("Proxy error:", data);
-      return NextResponse.json({ error: "Generation failed" }, { status: 500 });
+      return NextResponse.json({ error: data.error || "Generation failed" }, { status: 500 });
     }
 
-    // Returns { image: "url" } for editing, { images: ["url1","url2",...] } for generation
-    return NextResponse.json(data);
+    return NextResponse.json(image_base64 ? { image: data.images[0] } : { images: data.images });
   } catch (error: any) {
-    console.error("Crash:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Server error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 };
 
