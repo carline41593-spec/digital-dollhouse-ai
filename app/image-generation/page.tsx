@@ -16,11 +16,11 @@ export default function ImageGeneration() {
     setImageUrl('');
 
     try {
-      const res = await fetch('https://dollhouse-flux-backend.onrender.com/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
+      const res = await fetch('/api/generate', {   // ← now internal, no timeout
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ prompt }),
+});
 
       const data = await res.json();
 
