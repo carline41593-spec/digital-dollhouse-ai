@@ -1,4 +1,4 @@
-// app/api/generate/route.ts
+export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;  // Extend timeout to 60s (Hobby safe)
