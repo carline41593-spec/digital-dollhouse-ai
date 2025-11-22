@@ -1,40 +1,38 @@
-// app/api/photoshoot/route.ts — FINAL, WORKING VERSION (text-to-image + image-to-image)
-import { NextResponse } from "next/server";
+// app/api/photoshoot/route.js (or .ts — works for both)
+import { NextResponse } from 'next/server';
 
-export const POST = async (request: Request) => {
+export const maxDuration = 60;  // Allow 60s for Flux (free plan safe)
+
+export async function POST(request) {
   try {
-    const { prompt, image_base64 } = await request.json();
-
-    // Use a reliable, unlimited Flux proxy (supports both modes)
-    const proxyUrl = "https://flux-proxy.workers.dev/generate";
-    const payload = {
-      prompt: prompt || "masterpiece, ultra realistic, 8k",
-      init_image: image_base64 || undefined,
-      strength: image_base64 ? 0.75 : undefined,
-      num_images: image_base64 ? 1 : 4,
-      model: "flux-pro",
-    };
-
-    const res = await fetch(proxyUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("Proxy error:", data);
-      return NextResponse.json({ error: data.error || "Generation failed" }, { status: 500 });
+    const { prompt, style } = await request.json();  // Adjust fields as needed (e.g., add pose, outfit)
+    if (!prompt) {
+      return NextResponse.json({ error: 'Missing prompt' }, { status: 400 });
     }
 
-    return NextResponse.json(image_base64 ? { image: data.images[0] } : { images: data.images });
-  } catch (error: any) {
-    console.error("Server error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
-  }
-};
+    // ← FIX: Use YOUR Render backend, not the broken proxy
+    const res = await fetch('https://dollhouse-flux-backend.onrender.com/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        prompt: `${prompt}, ${style || 'photorealistic photoshoot, professional lighting, dynamic pose'}`  // Enhance for photoshoot
+      }),
+    });
 
-export const runtime = "nodejs";
-export const maxDuration = 60;
-export const dynamic = "force-dynamic";
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Photoshoot backend error:', err);
+      return NextResponse.json({ error: 'Flux failed', details: err }, { status: res.status });
+    }
+
+    const data = await res.json();
+    if (!data.image_url) {
+      return NextResponse.json({ error: 'No image generated' }, { status: 500 });
+    }
+
+    return NextResponse.json({ image_url: data.image_url });
+  } catch (error) {
+    console.error('Photoshoot route error:', error);
+    return NextResponse.json({ error: 'Internal server error (check logs)' }, { status: 500 });
+  }
+}
