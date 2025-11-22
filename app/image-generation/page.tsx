@@ -1,81 +1,66 @@
+// app/image-generation/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function ImageGeneration() {
-  const [prompt, setPrompt] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [prompt, setPrompt] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const generateImage = async () => {
+  const generate = async () => {
     if (!prompt.trim()) return;
-
     setLoading(true);
-    setError('');
-    setImageUrl('');
+    setImageUrl("");
 
     try {
-      const res = await fetch('/api/generate', {   // ← now internal, no timeout
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ prompt }),
-});
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
 
       const data = await res.json();
 
-      if (data.image_url) {
-        setImageUrl(data.image_url);
-      } else {
-        setError(data.error || 'No image generated');
-      }
+      if (!res.ok) throw new Error(data.error || "Failed");
+
+      setImageUrl(data.image_url);
     } catch (err: any) {
-      setError('Failed to reach backend — check console');
-      console.error(err);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex">
-      {/* Your beautiful sidebar here */}
-      <div className="w-80 bg-gradient-to-b from-purple-900 via-black to-black p-10">
-        <h1 className="text-6xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-          DigitalDc
-        </h1>
-        <nav className="mt-20 space-y-6 text-xl">
-          <a href="/prompt-generator" className="block text-gray-400">Prompt Generator</a>
-          <a className="block text-purple-400 font-bold">Image Generation</a>
-        </nav>
-      </div>
+    <div className="min-h-screen bg-black text-white p-20">
+      <h1 className="text-7xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent mb-8">
+        Image Generation
+      </h1>
 
-      <div className="flex-1 p-20">
-        <h1 className="text-6xl font-bold mb-10">Image Generation</h1>
+      <textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="Describe your dream dollhouse..."
+        className="w-full h-48 p-6 bg-gray-900 rounded-3xl text-xl mb-8 border border-purple-500/30 focus:border-purple-400 outline-none"
+      />
 
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe your dollhouse..."
-          className="w-full h-40 p-6 bg-gray-900 rounded-xl text-lg"
-        />
+      <button
+        onClick={generate}
+        disabled={loading}
+        className="px-16 py-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-2xl font-bold hover:scale-105 transition disabled:opacity-50"
+      >
+        {loading ? "Generating… (20–40s)" : "Generate Dollhouse"}
+      </button>
 
-        <button
-          onClick={generateImage}
-          disabled={loading}
-          className="mt-6 px-12 py-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-2xl font-bold"
-        >
-          {loading ? 'Generating... (20–60s)' : 'Generate Dollhouse'}
-        </button>
-
-        {error && <p className="mt-6 text-red-400">{error}</p>}
-
-        {imageUrl && (
-          <div className="mt-10">
-            <img src={imageUrl} alt="Your dollhouse" className="rounded-2xl shadow-2xl max-w-4xl" />
-          </div>
-        )}
-      </div>
+      {imageUrl && (
+        <div className="mt-16">
+          <img src={imageUrl} alt="Generated" className="rounded-3xl shadow-2xl max-w-4xl" />
+          <a href={imageUrl} download className="block mt-6 text-center text-purple-400 text-xl underline">
+            Download Image
+          </a>
+        </div>
+      )}
     </div>
   );
 }
