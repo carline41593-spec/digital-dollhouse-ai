@@ -1,40 +1,52 @@
-// app/api/generate/route.ts
+// app/api/generate/route.ts   ← REPLACE ENTIRE FILE
+export const runtime = 'nodejs';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
-
-import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
-    if (!prompt) return NextResponse.json({ error: 'Missing prompt' }, { status: 400 });
+    if (!prompt) return new Response(JSON.stringify({ error: 'Prompt required' }), { status: 400 });
 
-    const FAL_KEY = process.env.FAL_KEY;
-    if (!FAL_KEY) return NextResponse.json({ error: 'API key missing' }, { status: 500 });
+    const TOKEN = process.env.REPLICATE_API_TOKEN;
+    if (!TOKEN) return new Response(JSON.stringify({ error: 'REPLICATE_API_TOKEN missing' }), { status: 500 });
 
-    const res = await fetch('https://fal.run/fal-ai/flux/schnell', {
+    const create = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${FAL_KEY}`,
+        'Authorization': `Token ${TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt,
-        image_size: 'square_hd',
-        num_inference_steps: 4,
-        num_images: 1,
+        version: '07c541f6ca4b0e83c62e6d3b2b7e5b0e5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s',
+        input: {
+          prompt: prompt + ", ultra photorealistic, 8k, cinematic lighting",
+          num_outputs: 1,
+          width: 1024,
+          height: 1024,
+          num_inference_steps: 28,
+        },
       }),
     });
 
-    if (!res.ok) {
-      const err = await res.text();
-      return NextResponse.json({ error: 'fal.ai failed', details: err }, { status: 502 });
+    const prediction = await create.json();
+    let result = prediction;
+
+    while (result.status !== 'succeeded' && result.status !== 'failed') {
+      await new Promise(r => setTimeout(r, 2000));
+      result = await (await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
+        headers: { 'Authorization': `Token ${TOKEN}` },
+      })).json();
     }
 
-    const data = await res.json();
-    return NextResponse.json({ image_url: data.images?.[0] || data.image_url });
+    if (result.status === 'failed') return new Response(JSON.stringify({ error: result.error }), { status: 500 });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return new Response(JSON.stringify({ image_url: result.output[0] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
   }
 }
