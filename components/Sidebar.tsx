@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/", label: "Home", icon: "Home" },
   { href: "/creator-chat", label: "Creator Chat", icon: "Chat" },
-  { href: "/prompt-generator", label: "Prompt Generator", icon: "Lightbulb" },
   { href: "/image-generation", label: "Image Generation", icon: "Image" },
   { href: "/image-editing", label: "Image Editing", icon: "Edit" },
   { href: "/photoshoot", label: "AI Photoshoot Lounge", icon: "Camera" },
