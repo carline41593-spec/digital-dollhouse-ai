@@ -3,17 +3,26 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
+import { NextResponse } from 'next/server';
+
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
-    if (!prompt) return new Response(JSON.stringify({ error: 'Prompt required' }), { status: 400 });
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt required' }, { status: 400 });
+    }
 
     const TOKEN = process.env.TOGETHER_API_KEY;
-    if (!TOKEN) return new Response(JSON.stringify({ error: 'TOGETHER_API_KEY missing' }), { status: 500 });
+    if (!TOKEN) {
+      return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    }
 
     const res = await fetch('https://api.together.xyz/v1/images/generations', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${TOKEN}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         model: 'black-forest-labs/flux.1-dev',
         prompt: prompt + ', photorealistic, 8k, ultra detailed, cinematic lighting',
@@ -28,14 +37,14 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const err = await res.text();
-      return new Response(JSON.stringify({ error: err }), { status: 502 });
+      return NextResponse.json({ error: 'Generation failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
     const image_url = data.data[0].url;
 
-    return new Response(JSON.stringify({ image_url }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return NextResponse.json({ image_url });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
