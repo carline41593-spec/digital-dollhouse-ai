@@ -1,4 +1,3 @@
-// src/pages/PromptGenerator.tsx
 import { useState } from "react";
 
 export default function PromptGenerator() {
