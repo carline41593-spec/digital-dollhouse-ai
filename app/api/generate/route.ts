@@ -1,4 +1,4 @@
-// app/api/generate/route.ts  (text-only — no change needed, but here’s the working version)
+// app/api/generate/route.ts
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -18,12 +18,13 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "black-forest-labs/flux.1-dev",
-        prompt: prompt + ", photorealistic, 8k",
+        model: "black-forest-labs/FLUX.1-dev-lora",
+        prompt: prompt + ", photorealistic, 8k, ultra detailed, cinematic",
         n: 1,
+        steps: 28,
         width: 1024,
         height: 1024,
-        steps: 28,
+        guidance_scale: 7.5,
         response_format: "url"
       }),
     });
