@@ -1,18 +1,20 @@
-export const maxDuration = 60;
-import { NextResponse } from 'next/server';
+// app/api/generate/route.ts
+export const maxDuration = 60;        // ← Allows 60 seconds on Vercel Hobby
+export const dynamic = 'force-dynamic';
 
-export const maxDuration = 60;  // Extend timeout to 60s (Hobby safe)
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
+
     if (!prompt) {
       return NextResponse.json({ error: 'Missing prompt' }, { status: 400 });
     }
 
-    const FIREWORKS_KEY = process.env.FIREWORKS_API_KEY;  // Set in Vercel env
+    const FIREWORKS_KEY = process.env.FIREWORKS_API_KEY;
     if (!FIREWORKS_KEY) {
-      return NextResponse.json({ error: 'API key not set' }, { status: 500 });
+      return NextResponse.json({ error: 'API key missing' }, { status: 500 });
     }
 
     const res = await fetch('https://api.fireworks.ai/inference/v1/images/generations', {
@@ -22,7 +24,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'flux-schnell',  // Fast & reliable
+        model: 'flux-schnell',
         prompt,
         width: 1024,
         height: 1024,
@@ -33,7 +35,8 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const err = await res.text();
-      return NextResponse.json({ error: 'Fireworks API error', details: err }, { status: 502 });
+      console.error('Fireworks error:', err);
+      return NextResponse.json({ error: 'Fireworks failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
@@ -44,8 +47,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ image_url: imageUrl });
+
   } catch (error: any) {
-    console.error('Generate error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Generate route error:', error);
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
 }
