@@ -13,10 +13,10 @@ export const POST = async (request: Request) => {
       },
       body: JSON.stringify({
         model: "accounts/fireworks/models/flux-pro",
-        prompt: `${prompt}, ultra realistic transformation of the uploaded image, keep exact same face and person, 8k masterpiece, professional photography`,
-        image: image_base64,
+        prompt: prompt,
+        init_image: image_base64,   // ← THIS WAS THE PROBLEM (was "image", must be "init_image")
         strength: 0.8,
-        num_images: 1,           // ← ONLY ONE IMAGE
+        num_images: 1,
         width: 1024,
         height: 1280,
         steps: 30,
@@ -27,12 +27,14 @@ export const POST = async (request: Request) => {
     const data = await res.json();
 
     if (!res.ok) {
-      return NextResponse.json({ error: data.detail || "Failed" }, { status: 500 });
+      console.error("Fireworks error:", data);
+      return NextResponse.json({ error: data.detail || "Generation failed" }, { status: 500 });
     }
 
-    return NextResponse.json({ image: data.images[0].url }); // ← return single URL
-  } catch (error) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ image: data.images[0].url });
+  } catch (error: any) {
+    console.error("Server error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 };
 
