@@ -1,3 +1,6 @@
+// app/prompt-generator/page.tsx
+'use client';
+
 import { useState } from "react";
 
 export default function PromptGenerator() {
@@ -15,38 +18,40 @@ export default function PromptGenerator() {
     setGenerated("");
     setCopied(false);
 
-    // Smart prompt engineering template
     const basePrompt = `
-      Generate an extremely detailed, cinematic, professional image prompt for a dollhouse scene.
-      Style: ${style || "realistic, photorealistic"}.
-      Theme: ${theme || "magical, dreamy"}.
-      Extra details: ${details || "glowing windows, floating in clouds, candy furniture"}.
+      Create an extremely detailed, professional, cinematic image prompt for a dollhouse scene.
+      Style: ${style || "photorealistic, hyper-detailed"}.
+      Theme: ${theme || "magical, whimsical"}.
+      Extra details: ${details || "glowing windows, tiny furniture, floating in clouds"}.
       
-      Include: ultra-detailed textures, dramatic lighting, depth of field, 8k resolution, cinematic composition, rich colors, magical atmosphere, highly intricate.
-      Make it perfect for Flux AI image generation. Return ONLY the final prompt, no explanations.
+      Include ultra-realistic textures, dramatic cinematic lighting, depth of field, 8K resolution, rich colors, magical atmosphere, intricate details, award-winning digital art style.
+      Output ONLY the final prompt — no explanations, no quotes.
     `.trim();
 
     try {
-      // Using xAI's Grok API (free & fast) — or swap with OpenAI/Claude
+      // Using xAI Grok (free tier works great)
       const res = await fetch("https://api.x.ai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_XAI_API_KEY}`, // add your key in .env
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_XAI_KEY}`,
         },
         body: JSON.stringify({
           model: "grok-beta",
           messages: [{ role: "user", content: basePrompt }],
-          temperature: 0.8,
+          temperature: 0.85,
+          max_tokens: 500,
         }),
       });
 
       const data = await res.json();
-      const prompt = data.choices[0].message.content.trim();
+      const prompt = data.choices?.[0]?.message?.content?.trim() || "A stunning magical dollhouse...";
       setGenerated(prompt);
     } catch (err) {
-      setGenerated("Error: Could not reach AI. Using fallback prompt...");
-      setGenerated(`A breathtaking ${style || "victorian"} dollhouse ${theme ? "with " + theme : "floating in a surreal dreamscape"}, ${details || "made of glowing crystal and candy"}, ultra-detailed, cinematic lighting, 8k, magical atmosphere, photorealistic, highly intricate, depth of field`);
+      // Fallback if API fails (so page never breaks)
+      setGenerated(
+        `A breathtaking ${style || "victorian"} dollhouse ${theme ? "in a " + theme + " wonderland" : "floating in a surreal dreamscape"}, ${details || "made of glowing crystal, candy furniture, tiny sparkling lights"}, ultra-detailed textures, cinematic golden hour lighting, 8K resolution, photorealistic, magical atmosphere, depth of field, award-winning masterpiece`
+      );
     } finally {
       setLoading(false);
     }
@@ -60,7 +65,7 @@ export default function PromptGenerator() {
 
   return (
     <div className="min-h-screen bg-black text-white flex">
-      {/* Sidebar — matches your design perfectly */}
+      {/* Sidebar */}
       <div className="w-80 bg-gradient-to-b from-purple-900 via-black to-black p-10 space-y-12">
         <div>
           <h1 className="text-6xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
@@ -72,7 +77,7 @@ export default function PromptGenerator() {
         <nav className="space-y-8 text-xl">
           <a href="/" className="block text-gray-500 hover:text-white">Home</a>
           <a href="#" className="block text-gray-500 hover:text-white">Creator Chat</a>
-          <a href="#" className="block bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text font-bold rounded-lg px-4 py-3 -ml-4">
+          <a className="block bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text font-bold">
             Lightbulb Prompt Generator
           </a>
           <a href="/image-generation" className="block text-gray-500 hover:text-white">Image Generation</a>
@@ -96,33 +101,35 @@ export default function PromptGenerator() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div>
-              <label className="text-purple-400 font-bold text-lg">Style</label>
+              <label className="text-purple-400 font-bold text-lg block mb-3">Style</label>
               <input
                 type="text"
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
-                placeholder="e.g. cyberpunk, barbiecore, gothic, pastel"
-                className="w-full mt-3 p-5 rounded-2xl bg-gray-900 border border-purple-500/30 text-white focus:border-purple-400 focus:outline-none transition"
+                placeholder="cyberpunk, barbiecore, gothic, pastel goth..."
+                className="w-full p-5 rounded-2xl bg-gray-900 border border-purple-500/30 text-white focus:border-purple-400 focus:outline-none transition"
               />
             </div>
+
             <div>
-              <label className="text-pink-400 font-bold text-lg">Theme</label>
+              <label className="text-pink-400 font-bold text-lg block mb-3">Theme</label>
               <input
                 type="text"
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                placeholder="e.g. underwater, haunted, candy land, space station"
-                className="w-full mt-3 p-5 rounded-2xl bg-gray-900 border border-pink-500/30 text-white focus:border-pink-400 focus:outline-none transition"
+                placeholder="underwater palace, haunted mansion, candy kingdom..."
+                className="w-full p-5 rounded-2xl bg-gray-900 border border-pink-500/30 text-white focus:border-pink-400 focus:outline-none transition"
               />
             </div>
+
             <div>
-              <label className="text-yellow-400 font-bold text-lg">Extra Magic</label>
+              <label className="text-yellow-400 font-bold text-lg block mb-3">Extra Magic</label>
               <input
                 type="text"
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
-                placeholder="e.g. glowing windows, floating islands, tiny dragons"
-                className="w-full mt-3 p-5 rounded-2xl bg-gray-900 border border-yellow-500/30 text-white focus:border-yellow-400 focus:outline-none transition"
+                placeholder="tiny dragons, glowing mushrooms, floating teacups..."
+                className="w-full p-5 rounded-2xl bg-gray-900 border border-yellow-500/30 text-white focus:border-yellow-400 focus:outline-none transition"
               />
             </div>
           </div>
@@ -136,18 +143,20 @@ export default function PromptGenerator() {
           </button>
 
           {generated && (
-            <div className="mt-12 p-10 bg-gray-900/80 rounded-3xl border border-purple-500/50 backdrop-blur">
-              <div className="flex justify-between items-start mb-4">
+            <div className="mt-12 p-10 bg-gray-900/80 rounded-3xl border border-purple-500/50">
+              <div className="flex justify-between items-start mb-6">
                 <h3 className="text-2xl font-bold text-purple-400">Your Perfect Prompt:</h3>
                 <button
                   onClick={copyToClipboard}
-                  className={`px-6 py-3 rounded-full font-bold transition ${copied ? "bg-green-600" : "bg-purple-600 hover:bg-purple-700"}`}
+                  className={`px-8 py-4 rounded-full font-bold transition ${copied ? "bg-green-600" : "bg-purple-600 hover:bg-purple-700"}`}
                 >
                   {copied ? "Copied!" : "Copy Prompt"}
                 </button>
               </div>
               <p className="text-lg leading-relaxed text-gray-200 font-medium">{generated}</p>
-              <p className="text-sm text-gray-500 mt-6">Paste this directly into Image Generation → Ready to create magic!</p>
+              <p className="text-sm text-gray-500 mt-6">
+                Ready to paste into Image Generation
+              </p>
             </div>
           )}
         </div>
