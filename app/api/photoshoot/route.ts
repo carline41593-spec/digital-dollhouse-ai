@@ -8,14 +8,21 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const { image_base64, prompt } = await request.json();
-    if (!image_base64 || !prompt) return NextResponse.json({ error: 'Missing face or prompt' }, { status: 400 });
+    if (!image_base64 || !prompt) {
+      return NextResponse.json({ error: 'Missing face or prompt' }, { status: 400 });
+    }
 
     const TOKEN = process.env.TOGETHER_API_KEY;
-    if (!TOKEN) return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    if (!TOKEN) {
+      return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    }
 
     const res = await fetch('https://api.together.xyz/v1/images/generations', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${TOKEN}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         model: 'black-forest-labs/flux.1-dev',
         prompt: prompt + ', photorealistic, 8k, professional studio lighting, ultra detailed skin',
@@ -31,6 +38,7 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const err = await res.text();
+      console.error('Together AI error:', err);
       return NextResponse.json({ error: 'Generation failed', details: err }, { status: 502 });
     }
 
