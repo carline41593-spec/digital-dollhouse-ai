@@ -17,14 +17,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
     }
 
-    // Build content array for multimodal (main + optional reference + prompt)
+    // Build multimodal content for Kontext [dev] (image + text)
     const content = [
-      { type: 'text', text: prompt + ', photorealistic, 8k, keep exact face, ultra detailed' },
-      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image_base64}` } }  // Main reference
+      { type: 'text', text: `Keep this exact person's face, identity, skin tone, and features. Only change: ${prompt}. Photorealistic, 8k, professional lighting, ultra detailed.` },
+      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image_base64}` } }  // Main reference face
     ];
 
     if (reference_base64) {
-      content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${reference_base64}` } });  // Style/pose reference
+      content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${reference_base64}` } });  // Optional style/pose
     }
 
     const res = await fetch('https://api.together.xyz/v1/chat/completions', {
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         messages: [{ role: 'user', content }],
         max_tokens: 512,
         temperature: 0.7,
-        response_format: { type: 'image' },
+        response_format: { type: 'image' },  // Returns image URLs
       }),
     });
 
