@@ -15,34 +15,29 @@ export async function POST(request: Request) {
 
     const res = await fetch('https://api.together.xyz/v1/images/generations', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${TOKEN}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'black-forest-labs/flux.1-dev', // High-res photoreal
-        prompt: prompt + ', photorealistic, 8k, professional lighting, high detail',
-        init_image: `data:image/jpeg;base64,${image_base64}`, // Your reference face
-        n: 4, // 4 images
+        model: 'black-forest-labs/flux.1-dev',
+        prompt: prompt + ', photorealistic, 8k, professional studio lighting, ultra detailed skin',
+        init_image: `data:image/jpeg;base64,${image_base64}`,
+        n: 4,
         steps: 28,
         width: 1024,
         height: 1024,
-        response_format: 'url',
         guidance_scale: 7.5,
+        response_format: 'url',
       }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      console.error('Together AI error:', err);
       return NextResponse.json({ error: 'Generation failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
-    const images = data.data?.map((img: any) => img.url) || [];
+    const images = data.data.map((img: any) => img.url);
 
     return NextResponse.json({ images });
-
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
