@@ -17,29 +17,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
     }
 
-    const input: any = {
-      model: 'black-forest-labs/flux.1-dev',
-      prompt: prompt + ', photorealistic, 8k, professional lighting, ultra detailed',
-      init_image: `data:image/jpeg;base64,${image_base64}`,
-      n: 1,
-      steps: 28,
-      width: 1024,
-      height: 1024,
-      guidance_scale: 7.5,
-      response_format: 'url',
-    };
+    // Build content array for multimodal (main + optional reference + prompt)
+    const content = [
+      { type: 'text', text: prompt + ', photorealistic, 8k, keep exact face, ultra detailed' },
+      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image_base64}` } }  // Main reference
+    ];
 
     if (reference_base64) {
-      input.reference_image = `data:image/jpeg;base64,${reference_base64}`;
+      content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${reference_base64}` } });  // Style/pose reference
     }
 
-    const res = await fetch('https://api.together.xyz/v1/images/generations', {
+    const res = await fetch('https://api.together.xyz/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${TOKEN}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        model: 'black-forest-labs/FLUX.1-kontext-dev',
+        messages: [{ role: 'user', content }],
+        max_tokens: 512,
+        temperature: 0.7,
+        response_format: { type: 'image' },
+      }),
     });
 
     if (!res.ok) {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     const data = await res.json();
-    const image_url = data.data[0].url;
+    const image_url = data.choices[0].message.content.parts[0].image_url.url;
 
     return NextResponse.json({ image_url });
   } catch (error: any) {
