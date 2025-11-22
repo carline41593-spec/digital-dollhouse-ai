@@ -20,15 +20,15 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "black-forest-labs/FLUX.1-dev-lora",
-        prompt: `this exact person, ${prompt}, photorealistic, ultra detailed skin, 8k, professional studio lighting, sharp focus`,
+        model: "black-forest-labs/FLUX.1-dev",
+        prompt: `professional portrait of this exact person, ${prompt}, photorealistic, 8k, ultra detailed skin, sharp focus, studio lighting`,
         init_image: `data:image/jpeg;base64,${image_base64}`,
-        strength: 0.78,
+        strength: 0.75,
         n: 4,
-        steps: 28,
+        steps: 30,
         width: 1024,
         height: 1024,
-        guidance_scale: 7.5,
+        seed: 42,
         response_format: "url"
       }),
     });
