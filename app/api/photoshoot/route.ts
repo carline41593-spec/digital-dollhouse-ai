@@ -1,4 +1,4 @@
-// app/api/photoshoot/route.ts
+export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;  // 60s for photoshoot processing
