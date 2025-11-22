@@ -10,21 +10,48 @@ export default function ImageEditing() {
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleMain = (e: any) => {
+  // Auto-compress any image to <1MB (fixes 413 error)
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = (MAX_WIDTH / width) * height;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d")!;
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.7)); // 70% quality = tiny + sharp
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleMain = async (e: any) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setMainImage(reader.result as string);
-      reader.readAsDataURL(file);
+      const compressed = await compressImage(file);
+      setMainImage(compressed);
     }
   };
 
-  const handleRef = (e: any) => {
+  const handleRef = async (e: any) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setRefImage(reader.result as string);
-      reader.readAsDataURL(file);
+      const compressed = await compressImage(file);
+      setRefImage(compressed);
     }
   };
 
@@ -43,12 +70,12 @@ export default function ImageEditing() {
         body: JSON.stringify({
           image_base64: mainBase64,
           reference_base64: refBase64,
-          prompt: `Keep this exact person's face and identity. Only change: ${prompt.trim()}`,
+          prompt: `Keep this exact person's face, identity, and skin tone. Only change: ${prompt.trim()}. Ultra photorealistic, 8k, professional lighting.`,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed");
+      if (!res.ok) throw new Error(data.error || "Failed to generate");
 
       setResult(data.image_url);
     } catch (err: any) {
@@ -71,7 +98,7 @@ export default function ImageEditing() {
           {!mainImage ? (
             <label className="block cursor-pointer">
               <div className="h-96 bg-gray-900 border-4 border-dashed border-purple-600 rounded-3xl flex items-center justify-center text-2xl">
-                Upload Main Photo
+                Upload Your Photo
               </div>
               <input type="file" accept="image/*" onChange={handleMain} className="hidden" />
             </label>
@@ -97,7 +124,7 @@ export default function ImageEditing() {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g. cyberpunk neon hair, luxury fashion editorial, anime character..."
+            placeholder="e.g. cyberpunk neon hair, luxury fashion editorial, anime character, beach sunset..."
             className="w-full h-48 p-6 text-xl bg-gray-900 rounded-3xl border border-purple-600 focus:border-pink-600 outline-none resize-none"
           />
 
@@ -115,7 +142,7 @@ export default function ImageEditing() {
           <h3 className="text-3xl font-bold mb-6">Result</h3>
           {loading && (
             <div className="h-96 bg-gray-900/50 rounded-3xl animate-pulse flex items-center justify-center">
-              <p className="text-3xl">Working...</p>
+              <p className="text-3xl">Creating magic...</p>
             </div>
           )}
           {result && (
