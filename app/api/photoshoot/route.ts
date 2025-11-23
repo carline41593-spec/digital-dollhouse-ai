@@ -10,32 +10,41 @@ export async function POST(request: Request) {
     const { image_base64, prompt } = await request.json();
     if (!image_base64 || !prompt) return NextResponse.json({ error: 'Missing face or prompt' }, { status: 400 });
 
-    const TOKEN = process.env.FAL_KEY;
-    if (!TOKEN) return NextResponse.json({ error: 'FAL_KEY missing' }, { status: 500 });
+    const TOKEN = process.env.TOGETHER_API_KEY;
+    if (!TOKEN) return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
 
-    const res = await fetch('https://fal.run/fal-ai/flux/dev/image-to-image', {
+    const res = await fetch('https://api.together.xyz/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${TOKEN}`,
+        'Authorization': `Bearer ${TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: prompt + ', photorealistic, 8k, professional lighting, keep exact face identity and features',
-        image_url: `data:image/jpeg;base64,${image_base64}`,
-        image_size: 'square_hd',
-        num_inference_steps: 28,
-        num_images: 4,
-        strength: 0.75, // Balances likeness and change
+        model: 'black-forest-labs/FLUX.1-kontext-dev',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt + ', photorealistic, 8k, professional lighting, keep exact face identity and features' },
+              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image_base64}` } }  // Your reference face
+            ]
+          }
+        ],
+        max_tokens: 512,
+        temperature: 0.7,
+        response_format: { type: 'image' },  // Returns image URLs
       }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      return NextResponse.json({ error: 'fal.ai failed', details: err }, { status: 502 });
+      return NextResponse.json({ error: 'Together AI failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
-    const images = data.images || [];
+    const images = data.choices[0].message.content.parts
+      .filter((part: any) => part.type === 'image_url')
+      .map((part: any) => part.image_url.url);
 
     return NextResponse.json({ images });
   } catch (error: any) {
