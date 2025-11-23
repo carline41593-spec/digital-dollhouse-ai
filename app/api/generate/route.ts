@@ -8,10 +8,14 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
-    if (!prompt) return NextResponse.json({ error: 'Prompt required' }, { status: 400 });
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt required' }, { status: 400 });
+    }
 
     const TOKEN = process.env.TOGETHER_API_KEY;
-    if (!TOKEN) return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    if (!TOKEN) {
+      return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    }
 
     const res = await fetch('https://api.together.xyz/v1/images/generations', {
       method: 'POST',
