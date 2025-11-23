@@ -9,27 +9,24 @@ export async function POST(req: Request) {
   const { image_base64, prompt } = await req.json();
   if (!image_base64 || !prompt) return NextResponse.json({ error: "Missing data" }, { status: 400 });
 
-  const res = await fetch("https://api.together.xyz/v1/chat/completions", {
+  const res = await fetch("https://api.together.xyz/v1/images/generations", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "black-forest-labs/FLUX.1-kontext-dev",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `${prompt}, photorealistic, 8k, professional studio lighting, ultra detailed skin, sharp focus, keep exact same face identity and features` },
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${image_base64}` } }
-          ]
-        }
-      ],
-      max_tokens: 512,
-      temperature: 0.7,
-      n: 4,                         // ← 4 images at once
-      response_format: { type: "image" }
+      model: "black-forest-labs/FLUX.1-dev",           // ← this one fully supports init_image
+      prompt: `this exact person, ${prompt}, photorealistic, 8k, ultra detailed skin, professional studio lighting, sharp focus`,
+      init_image: `data:image/jpeg;base64,${image_base64}`,
+      strength: 0.78,
+      steps: 28,
+      n: 4,
+      width: 1024,
+      height: 1024,
+      guidance_scale: 7.5,
+      seed: 42,
+      response_format: "url"
     }),
   });
 
@@ -39,9 +36,7 @@ export async function POST(req: Request) {
   }
 
   const data = await res.json();
-  const images = data.choices.flatMap((c: any) =>
-    c.message.content.filter((p: any) => p.type === "image_url").map((p: any) => p.image_url.url)
-  );
+  const images = data.data.map((x: any) => x.url);
 
   return NextResponse.json({ images });
 }
