@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const TOKEN = process.env.FAL_KEY;
     if (!TOKEN) return NextResponse.json({ error: 'FAL_KEY missing' }, { status: 500 });
 
-    const res = await fetch('https://fal.run/fal-ai/flux/pro', {
+    const res = await fetch('https://fal.run/fal-ai/flux/dev', {
       method: 'POST',
       headers: {
         'Authorization': `Key ${TOKEN}`,
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         prompt: prompt + ', photorealistic, 8k, ultra detailed',
         image_size: 'square_hd',
-        num_inference_steps: 30,
+        num_inference_steps: 28,
         num_images: 1,
       }),
     });
