@@ -13,17 +13,17 @@ export async function POST(request: Request) {
     const TOKEN = process.env.FAL_KEY;
     if (!TOKEN) return NextResponse.json({ error: 'FAL_KEY missing' }, { status: 500 });
 
-    const res = await fetch('https://fal.run/fal-ai/flux/pro/image-to-image', {
+    const res = await fetch('https://fal.run/fal-ai/flux/dev/image-to-image', {
       method: 'POST',
       headers: {
         'Authorization': `Key ${TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: `Keep this exact person's face, identity, and skin tone. Only change: ${prompt}. Photorealistic, 8k, professional lighting, ultra detailed.`,
+        prompt: `Keep this exact person's face, identity, and skin tone. Only change: ${prompt}. Photorealistic, 8k, professional lighting.`,
         image_url: `data:image/jpeg;base64,${image_base64}`,
         image_size: 'square_hd',
-        num_inference_steps: 30,
+        num_inference_steps: 28,
         num_images: 1,
         strength: 0.8,
       }),
