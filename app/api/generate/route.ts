@@ -8,30 +8,35 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
-    if (!prompt) return NextResponse.json({ error: 'No prompt' }, { status: 400 });
+    if (!prompt) return NextResponse.json({ error: 'Prompt required' }, { status: 400 });
 
-    const TOKEN = process.env.TOGETHER_API_KEY;
-    const res = await fetch('https://api.together.xyz/v1/images/generations', {
+    const TOKEN = process.env.FAL_KEY;
+    if (!TOKEN) return NextResponse.json({ error: 'FAL_KEY missing' }, { status: 500 });
+
+    const res = await fetch('https://fal.run/fal-ai/flux/pro', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${TOKEN}`,
+        'Authorization': `Key ${TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "black-forest-labs/FLUX.1-dev",
-        prompt: prompt + ", photorealistic, 8k, ultra detailed, cinematic lighting",
-        n: 1,
-        steps: 30,
-        width: 1024,
-        height: 1024,
-        seed: 42,
-        response_format: "url"
+        prompt: prompt + ', photorealistic, 8k, ultra detailed',
+        image_size: 'square_hd',
+        num_inference_steps: 30,
+        num_images: 1,
       }),
     });
 
+    if (!res.ok) {
+      const err = await res.text();
+      return NextResponse.json({ error: 'fal.ai failed', details: err }, { status: 502 });
+    }
+
     const data = await res.json();
-    return NextResponse.json({ image_url: data.data[0].url });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    const image_url = data.images?.[0] || data.image_url;
+
+    return NextResponse.json({ image_url });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
