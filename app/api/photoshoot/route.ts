@@ -8,44 +8,42 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const { image_base64, prompt } = await request.json();
-    if (!image_base64 || !prompt) return NextResponse.json({ error: 'Missing face or prompt' }, { status: 400 });
+    if (!image_base64 || !prompt) {
+      return NextResponse.json({ error: 'Missing face or prompt' }, { status: 400 });
+    }
 
     const TOKEN = process.env.TOGETHER_API_KEY;
-    if (!TOKEN) return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    if (!TOKEN) {
+      return NextResponse.json({ error: 'TOGETHER_API_KEY missing' }, { status: 500 });
+    }
 
-    const res = await fetch('https://api.together.xyz/v1/chat/completions', {
+    const res = await fetch('https://api.together.xyz/v1/images/generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'black-forest-labs/FLUX.1-kontext-dev',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt + ', photorealistic, 8k, professional lighting, keep exact face identity, skin tone, and features' },
-              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image_base64}` } }  // Your reference face
-            ]
-          }
-        ],
-        max_tokens: 512,
-        temperature: 0.7,
-        n: 4,  // 4 images
-        response_format: { type: 'image' },
+        model: 'black-forest-labs/flux.1-dev',
+        prompt: `this exact person, ${prompt}, photorealistic, 8k, professional studio lighting, ultra detailed skin, sharp focus on face, keep exact identity`,
+        init_image: `data:image/jpeg;base64,${image_base64}`,
+        strength: 0.75,
+        n: 4,
+        steps: 28,
+        width: 1024,
+        height: 1024,
+        guidance_scale: 7.5,
+        response_format: 'url',
       }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      return NextResponse.json({ error: 'Together AI failed', details: err }, { status: 502 });
+      return NextResponse.json({ error: 'Generation failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
-    const images = data.choices.flatMap((c: any) =>
-      c.message.content.filter((p: any) => p.type === 'image_url').map((p: any) => p.image_url.url)
-    );
+    const images = data.data.map((img: any) => img.url);
 
     return NextResponse.json({ images });
   } catch (error: any) {
