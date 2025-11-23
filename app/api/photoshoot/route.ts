@@ -8,39 +8,37 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const { image_base64, prompt } = await request.json();
-    if (!image_base64 || !prompt) return NextResponse.json({ error: 'Missing data' }, { status: 400 });
+    if (!image_base64 || !prompt) return NextResponse.json({ error: 'Missing face or prompt' }, { status: 400 });
 
-    const TOKEN = process.env.TOGETHER_API_KEY;
-    if (!TOKEN) return NextResponse.json({ error: 'API key missing' }, { status: 500 });
+    const TOKEN = process.env.FAL_KEY;
+    if (!TOKEN) return NextResponse.json({ error: 'FAL_KEY missing' }, { status: 500 });
 
-    const res = await fetch('https://api.together.xyz/v1/images/generations', {
+    const res = await fetch('https://fal.run/fal-ai/flux/pro/image-to-image', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${TOKEN}`,
+        'Authorization': `Key ${TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "black-forest-labs/FLUX.1-dev",
-        prompt: `professional portrait of this exact person, ${prompt}, photorealistic, 8k, ultra detailed skin, sharp focus, studio lighting`,
-        init_image: `data:image/jpeg;base64,${image_base64}`,
-        strength: 0.75,
-        n: 4,
-        steps: 30,
-        width: 1024,
-        height: 1024,
-        seed: 42,
-        response_format: "url"
+        prompt: prompt + ', photorealistic, 8k, professional lighting, ultra detailed skin, sharp focus on face',
+        image_url: `data:image/jpeg;base64,${image_base64}`,
+        image_size: 'square_hd',
+        num_inference_steps: 30,
+        num_images: 4,
+        strength: 0.75, // Balances likeness and change
       }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      return NextResponse.json({ error: err }, { status: 502 });
+      return NextResponse.json({ error: 'fal.ai failed', details: err }, { status: 502 });
     }
 
     const data = await res.json();
-    return NextResponse.json({ images: data.data.map((i: any) => i.url) });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    const images = data.images || [];
+
+    return NextResponse.json({ images });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
